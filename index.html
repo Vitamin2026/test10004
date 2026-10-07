@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>스카이파크 - 로그인 및 실시간 게임</title>
+    <!-- 🛡️ 브라우저 전용 정식 Supabase 라이브러리 탑재 -->
+    <script src="https://jsdelivr.net"></script>
+</head>
+<body style="background-color: #222f3e; color: white; padding: 40px; font-family: '맑은 고딕'; display: flex; flex-direction: column; align-items: center;">
+
+    <!-- 🔑 [화면 1: 로그인 포탈] -->
+    <div id="auth-zone" style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+        <h1 style="margin-bottom: 5px; font-size: 26px;">🎰 SKY PARK 로그인 포탈</h1>
+        <p style="color: #a4b0be; margin-bottom: 30px; font-size: 14px;">보안 클라우드 서버 실시간 인증</p>
+
+        <div style="background-color: #10171e; padding: 35px 40px; border-radius: 12px; width: 100%; max-width: 450px; display: flex; flex-direction: column; border: 1px solid #2f3640;">
+            <div style="font-size: 18px; font-weight: bold; margin-bottom: 20px; text-align: center; color: #3498db;">이메일 계정 인증</div>
+            
+            <input type="email" id="auth-email" placeholder="이메일 주소" style="padding: 12px; border-radius: 6px; border: 1px solid #2c3e50; background-color: #2f3640; color: white; margin-bottom: 15px;">
+            <input type="password" id="auth-password" placeholder="비밀번호 (6자리 이상)" style="padding: 12px; border-radius: 6px; border: 1px solid #2c3e50; background-color: #2f3640; color: white; margin-bottom: 25px;">
+
+            <button onclick="handleLogin()" style="padding: 14px; border: none; background-color: #3498db; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; margin-bottom: 10px;">로그인</button>
+            <button onclick="handleSignUp()" style="padding: 14px; border: 1px solid #2ecc71; background-color: transparent; color: #2ecc71; font-weight: bold; border-radius: 6px; cursor: pointer;">간편 회원가입</button>
+        </div>
+    </div>
+
+    <!-- 🎴 [화면 2: 홀짝 게임 대시보드] -->
+    <div id="game-zone" style="display: none; flex-direction: column; align-items: center; width: 100%;">
+        <h1 style="margin-bottom: 5px; font-size: 26px;">🎰 내 첫 실시간 홀짝 게임 사이트</h1>
+        <p style="color: #a4b0be; margin-bottom: 30px; font-size: 14px;" id="welcome-msg">환영합니다!</p>
+
+        <div style="background-color: #10171e; padding: 25px 40px; border-radius: 12px; width: 100%; max-width: 650px; display: flex; flex-direction: column; align-items: center; border: 1px solid #2f3640;">
+            <div style="font-size: 24px; font-weight: 800; color: #ffffff; margin-bottom: 25px;" id="timer-label">⏳ [ 결과 발표까지: 5초 ]</div>
+            <div style="display: flex; gap: 40px; margin-bottom: 25px;">
+                <div id="card1" style="width: 110px; height: 165px; background-color: #c0392b; border: 5px solid white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 900; color: #2c3e50;">🎴</div>
+                <div id="card2" style="width: 110px; height: 165px; background-color: #c0392b; border: 5px solid white; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 900; color: #2c3e50;">🎴</div>
+            </div>
+            <div id="result-label" style="font-size: 32px; font-weight: bold; color: #00cec9; min-height: 45px;"></div>
+        </div>
+
+        <div style="margin-top: 25px; background-color: #1e272e; padding: 25px; border-radius: 12px; width: 100%; max-width: 650px; display: flex; flex-direction: column; align-items: center; border: 1px solid #2f3640;">
+            <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 15px;">
+                <div style="font-size: 18px; font-weight: bold; color: #f1c40f;">💰 보유 포인트: <span id="my-points">10,000</span> P</div>
+                <div style="font-size: 15px; font-weight: bold; color: #ff6b6b;">🚨 최소 배팅: 100 P</div>
+            </div>
+            <div id="bet-status-label" style="text-align: center; font-size: 15px; color: #a4b0be; background-color: #10171e; padding: 12px; border-radius: 6px; width: 100%; margin-bottom: 20px; border: 1px solid #2c3e50;">선택된 배팅: 미선택 (0 P)</div>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; width: 100%;">
+                <button onclick="addBet(100)" style="padding: 12px; background-color: #34495e; color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1;">+100P</button>
+                <button onclick="addBet(500)" style="padding: 12px; background-color: #34495e; color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1;">+500P</button>
+                <button onclick="addBet(1000)" style="padding: 12px; background-color: #34495e; color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1;">+1,000P</button>
+                <button onclick="addBet('all')" style="padding: 12px; background-color: #e67e22; color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1;">ALL-IN</button>
+            </div>
+            <div style="display: flex; gap: 15px; width: 100%;">
+                <button onclick="selectPrediction('홀')" style="padding: 14px; background-color: #9b59b6; color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1; font-size: 18px; font-weight: bold;">홀 베팅</button>
+                <button onclick="selectPrediction('짝')" style="padding: 14px; background-color: #2ecc71; color: white; border: none; border-radius: 6px; cursor: pointer; flex: 1; font-size: 18px; font-weight: bold;">짝 베팅</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ⚙️ [2부 스크립트 결합 구역] -->
+    <script>
+        const SUPABASE_URL = "https://supabase.co";
+        const SUPABASE_KEY = "sb_publishable_l0TmxLSf6odLwNDYVKxZwQ_tgDGpx_fN"; 
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let myPoints = 10000;
+        let totalBetAmount = 0;
+        let selectedPrediction = "";
+        let isBettingClosed = false;
+        let timeRemaining = 5;
+
+        const myPointsEl = document.getElementById('my-points');
+        const timerLabelEl = document.getElementById('timer-label');
+        const resultLabelEl = document.getElementById('result-label');
+        const betStatusEl = document.getElementById('bet-status-label');
+        const card1El = document.getElementById('card1');
+        const card2El = document.getElementById('card2');
+
+        async function handleSignUp() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if(!email || !password) return alert("이메일과 비밀번호를 모두 입력해 주세요.");
+
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) alert("가입 실패: " + error.message);
+            else alert("🎉 회원가입 성공! 가입하신 정보로 로그인을 눌러주세요.");
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            if(!email || !password) return alert("이메일과 비밀번호를 입력해 주세요.");
+
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                alert("로그인 실패: " + error.message);
+            } else {
+                alert("👋 로그인 성공! 게임 월드에 진입합니다.");
+                document.getElementById('auth-zone').style.display = 'none';
+                document.getElementById('game-zone').style.display = 'flex';
+                document.getElementById('welcome-msg').innerText = "✨ 인증 계정: " + data.user.email;
+                startGameLoop();
+            }
+        }
+
+        function addBet(amount) {
+            if (isBettingClosed) return alert("결과 발표 진행 중에는 금액 조작이 차단됩니다.");
+            let bet = amount === 'all' ? myPoints : amount;
+            if (myPoints >= bet && bet > 0) {
+                myPoints -= bet; totalBetAmount += bet; updateUI();
+            } else { alert("보유 포인트가 부족합니다!"); }
+        }
+
+        function selectPrediction(type) {
+            if (isBettingClosed) return alert("결과 진행 중에는 배팅 타겟을 바꿀 수 없습니다.");
+            if (totalBetAmount < 100) return alert("최소 100P 이상 장전 후 선택해 주세요.");
+            selectedPrediction = type; updateUI();
+        }
+
+        function updateUI() {
+            myPointsEl.innerText = myPoints.toLocaleString();
+            let predText = selectedPrediction === "" ? "미선택" : selectedPrediction;
+            betStatusEl.innerText = "선택된 배팅: " + predText + " (" + totalBetAmount.toLocaleString() + " P)";
+            betStatusEl.style.color = selectedPrediction !== "" ? "#00cec9" : "#a4b0be";
+        }
+
+        function startGameLoop() {
+            setInterval(() => {
+                if (timeRemaining > 0) {
+                    isBettingClosed = false;
+                    timerLabelEl.innerText = "⏳ [ 결과 발표까지: " + timeRemaining + "초 ]";
+                    resultLabelEl.innerText = ""; card1El.innerText = "🎴"; card2El.innerText = "🎴";
+                    timeRemaining--;
+                } else if (timeRemaining === 0) {
+                    isBettingClosed = true; timerLabelEl.innerText = "🎉 [ 결과 오픈 완료!! ]";
+                    let num1 = Math.floor(Math.random() * 10) + 1;
+                    let num2 = Math.floor(Math.random() * 10) + 1;
+                    let score = (num1 + num2) % 10; let oddEven = (score % 2 === 1) ? "홀" : "짝";
+                    card1El.innerText = num1; card2El.innerText = num2; resultLabelEl.innerText = "결과: " + oddEven;
+                    if (selectedPrediction !== "" && selectedPrediction === oddEven) myPoints += (totalBetAmount * 2);
+                    timeRemaining = -4;
+                } else {
+                    timeRemaining++;
+                    if (timeRemaining === 0) {
+totalBetAmount = 0; selectedPrediction = ""; updateUI(); timeRemaining = 5;
+}
+}
+}, 1000);
+}
+updateUI();
